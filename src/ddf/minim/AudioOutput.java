@@ -292,6 +292,15 @@ public class AudioOutput extends AudioSource implements Polyphonic
 		noteManager.addEvent( startTime, duration, instrument );
 	}
 
+	public void playNoteAtBeat(int meterLength,float startTime, float duration, Instrument instrument)
+	{
+		noteManager.addEventAtBeat(meterLength,startTime, duration, instrument );
+	}
+
+	public int nextMeterStart(int meterLength){
+		return noteManager.nextMeterStart(meterLength);
+	}
+
 	/**
 	 * Schedule a "note" to played by the output that uses the default Instrument.
 	 * 
