@@ -6,17 +6,19 @@ import java.util.HashMap;
 import ddf.minim.ugens.Instrument;
 
 /**
+ *
  * @author ddf
  * @invisible
  */
 
-public class NoteManager {
+public class NoteManager
+{
 	// we use this do our timing, basically
 	private float sampleRate;
 	private float tempo;
 	private float noteOffset;
 	private float durationFactor;
-	private int now;
+	private int   now;
 	// our events are stored in a map.
 	// the keys in this map are the "now" that the events should
 	// occur at and the values are a list of events that occur
@@ -29,37 +31,45 @@ public class NoteManager {
 	// is sending events because of ticks from the audio output.
 	private boolean paused;
 
-	private interface NoteEvent {
+	private interface NoteEvent
+	{
 		void send();
 	}
 
-	private class NoteOnEvent implements NoteEvent {
+	private class NoteOnEvent implements NoteEvent
+	{
 		private Instrument instrument;
 		private float duration;
 
-		public NoteOnEvent(Instrument i, float dur) {
+		public NoteOnEvent(Instrument i, float dur)
+		{
 			instrument = i;
 			duration = dur;
 		}
 
-		public void send() {
+		public void send()
+		{
 			instrument.noteOn(duration);
 		}
 	}
 
-	private class NoteOffEvent implements NoteEvent {
+	private class NoteOffEvent implements NoteEvent
+	{
 		private Instrument instrument;
 
-		public NoteOffEvent(Instrument i) {
+		public NoteOffEvent(Instrument i)
+		{
 			instrument = i;
 		}
 
-		public void send() {
+		public void send()
+		{
 			instrument.noteOff();
 		}
 	}
 
-	public NoteManager(float sampleRate) {
+	public NoteManager( float sampleRate )
+	{
 		this.sampleRate = sampleRate;
 		events = new HashMap<Integer, ArrayList<NoteEvent>>();
 		tempo = 60f;
@@ -69,34 +79,39 @@ public class NoteManager {
 		paused = false;
 	}
 
-
 	// events are always specified as happening some period of time from now.
 	// but we store them as taking place at a specific time, rather than a relative time.
-	public synchronized void addEventAtBeat(int meterLength, float startTime, float duration, Instrument instrument) {
-		int tickUnit = (int) (sampleRate * 60f / tempo);
+	public synchronized void addEventAtBeat( int meterLength, float startTime, float duration, Instrument instrument )
+	{
+		int tickUnit = (int) ( sampleRate * 60f / tempo );
 		int ticksPassed = (int) Math.ceil(now / tickUnit);
 
-		//   int beatOffset = 4 * tickUnit - (now % tickUnit);
-		int on = (ticksPassed + (meterLength - ticksPassed % meterLength)) * tickUnit + (int) (sampleRate * (startTime + noteOffset) * 60f / tempo);
+		int on = ( ticksPassed + ( meterLength - ticksPassed % meterLength ) ) * tickUnit + (int) ( sampleRate * ( startTime + noteOffset ) * 60f / tempo );
 		Integer onAt = new Integer(on);
 
 		float actualDuration = duration * durationFactor * 60f / tempo;
 
-		if (events.containsKey(onAt)) {
+		if ( events.containsKey(onAt) )
+		{
 			ArrayList<NoteEvent> eventsAtOn = events.get(onAt);
 			eventsAtOn.add(new NoteOnEvent(instrument, actualDuration));
-		} else {
+		}
+		else
+		{
 			ArrayList<NoteEvent> eventsAtOn = new ArrayList<NoteEvent>();
 			eventsAtOn.add(new NoteOnEvent(instrument, actualDuration));
 			events.put(onAt, eventsAtOn);
 		}
 
-		Integer offAt = new Integer(on + (int) (sampleRate * actualDuration));
+		Integer offAt = new Integer(on + (int) ( sampleRate * actualDuration ));
 
-		if (events.containsKey(offAt)) {
+		if ( events.containsKey(offAt) )
+		{
 			ArrayList<NoteEvent> eventsAtOff = events.get(offAt);
 			eventsAtOff.add(new NoteOffEvent(instrument));
-		} else {
+		}
+		else
+		{
 			ArrayList<NoteEvent> eventsAtOff = new ArrayList<NoteEvent>();
 			eventsAtOff.add(new NoteOffEvent(instrument));
 			events.put(offAt, eventsAtOff);
@@ -104,85 +119,104 @@ public class NoteManager {
 
 	}
 
-	public int nextMeterStart(int meterLength) {
-		int tickUnit = (int) (sampleRate * 60f / tempo);
+	public int nextMeterStart( int meterLength )
+	{
+		int tickUnit = (int) ( sampleRate * 60f / tempo );
 		int ticksPassed = (int) Math.ceil(now / tickUnit);
-		return (int) ((((ticksPassed + (meterLength - ticksPassed % meterLength)) * tickUnit - now) / sampleRate) * 1000);
+		return (int) ( ( ( ( ticksPassed + ( meterLength - ticksPassed % meterLength ) ) * tickUnit - now ) / sampleRate ) * 1000 );
 	}
 
 	// events are always specified as happening some period of time from now.
 	// but we store them as taking place at a specific time, rather than a relative time.
-	public synchronized void addEvent(float startTime, float duration, Instrument instrument) {
-		int on = now + (int) (sampleRate * (startTime + noteOffset) * 60f / tempo);
-		Integer onAt = new Integer(on);
+	public synchronized void addEvent(float startTime, float duration, Instrument instrument)
+	{
+		int on = now + (int)(sampleRate * ( startTime + noteOffset ) * 60f/tempo);
+		Integer onAt = new Integer( on );
 
-		float actualDuration = duration * durationFactor * 60f / tempo;
+		float actualDuration = duration * durationFactor * 60f/tempo;
 
-		if (events.containsKey(onAt)) {
+		if ( events.containsKey(onAt) )
+		{
 			ArrayList<NoteEvent> eventsAtOn = events.get(onAt);
-			eventsAtOn.add(new NoteOnEvent(instrument, actualDuration));
-		} else {
+			eventsAtOn.add( new NoteOnEvent(instrument, actualDuration) );
+		}
+		else
+		{
 			ArrayList<NoteEvent> eventsAtOn = new ArrayList<NoteEvent>();
-			eventsAtOn.add(new NoteOnEvent(instrument, actualDuration));
+			eventsAtOn.add( new NoteOnEvent(instrument, actualDuration) );
 			events.put(onAt, eventsAtOn);
 		}
 
-		Integer offAt = new Integer(on + (int) (sampleRate * actualDuration));
+		Integer offAt = new Integer( on + (int)(sampleRate * actualDuration) );
 
-		if (events.containsKey(offAt)) {
+		if ( events.containsKey(offAt) )
+		{
 			ArrayList<NoteEvent> eventsAtOff = events.get(offAt);
-			eventsAtOff.add(new NoteOffEvent(instrument));
-		} else {
+			eventsAtOff.add( new NoteOffEvent(instrument) );
+		}
+		else
+		{
 			ArrayList<NoteEvent> eventsAtOff = new ArrayList<NoteEvent>();
-			eventsAtOff.add(new NoteOffEvent(instrument));
+			eventsAtOff.add( new NoteOffEvent(instrument) );
 			events.put(offAt, eventsAtOff);
 		}
 
 	}
 
-
-	public void setTempo(float tempo) {
+	public void setTempo(float tempo)
+	{
 		this.tempo = tempo;
 	}
 
-	public float getTempo() {
+	public float getTempo()
+	{
 		return tempo;
 	}
 
-	public void setNoteOffset(float noteOffset) {
+	public void setNoteOffset(float noteOffset)
+	{
 		this.noteOffset = noteOffset;
 	}
 
-	public float getNoteOffset() {
+	public float getNoteOffset()
+	{
 		return noteOffset;
 	}
 
-	public void setDurationFactor(float durationFactor) {
+	public void setDurationFactor(float durationFactor)
+	{
 		this.durationFactor = durationFactor;
 	}
 
-	public float getDurationFactor() {
+	public float getDurationFactor()
+	{
 		return durationFactor;
 	}
 
-	public void pause() {
+	public void pause()
+	{
 		paused = true;
 	}
 
-	public void resume() {
+	public void resume()
+	{
 		paused = false;
 	}
 
-	synchronized public void tick() {
-		if (paused == false) {
+	synchronized public void tick()
+	{
+		if ( paused == false )
+		{
 			// find the events we should trigger now.
 			Integer Now = new Integer(now);
 
-			if (events.containsKey(Now)) {
+			if ( events.containsKey(Now) )
+			{
 				ArrayList<NoteEvent> eventsToSend = events.get(Now);
 				// ddf: change this to a for loop from an iterator so that
 				// 		this list can be safely concurrently modified.
-				for (int i = 0; i < eventsToSend.size(); ++i) {
+				for( int i = 0; i < eventsToSend.size(); ++i )
+				{
 					eventsToSend.get(i).send();
 				}
 				// remove this list because we've sent all the events
